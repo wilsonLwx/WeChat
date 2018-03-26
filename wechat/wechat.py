@@ -51,7 +51,7 @@ def wechat8026():
             request_data = request.data
             # 将xml数据转换成字典
             request_dict = xmltodict.parse(request_data)['xml']
-            if request_dict['MsgType'] == 'text':
+            if 'text' == request_dict['MsgType']:
                 # 拼接内容节点
                 response = {
                     'ToUserName': request_dict['FromUserName'],
@@ -60,11 +60,8 @@ def wechat8026():
                     'MsgType': 'text',
                     'Content': request_dict['Content'],
                 }
-                # 将字典转换成xml格式
-                response = xmltodict.unparse({'xml': response})
+
                 print request_dict['Content']
-                # 返回xml数据
-                return response
 
             elif 'voice' == request_dict['MsgType']:
 
@@ -81,21 +78,48 @@ def wechat8026():
                 }
 
                 print request_dict['Recognition']
-                response = xmltodict.unparse({'xml': response})
-                return response
+                # 拼接根节点
+            elif 'event' == request_dict['MsgType']:
+                print '接收到一个事件消息'
+                event = request_dict['Event']
+                if 'subscribe' == event:
+                    # 拼接xml的内容节点
+                    response = {
+                        'ToUserName': request_dict['FromUserName'],
+                        'FromUserName': request_dict['ToUserName'],
+                        'CreateTime': time.time(),
+                        'MsgType': 'text',
+                        'Content': '感谢您的关注',
+                    }
+                    if request_dict['EventKey']:
+                        response['Content'] = '哎呀！被关注了呢；场景值是%s' % request_dict['EventKey']
+                        print '感谢您的关注'
+
+                elif 'unsubscribe' == event:
+                    print '被别人取消了关注'
+                    response = None
+
+                else:
+                    response = None
             else:
+                # 拼接xml的内容节点
                 response = {
                     'ToUserName': request_dict['FromUserName'],
                     'FromUserName': request_dict['ToUserName'],
                     'CreateTime': time.time(),
                     'MsgType': 'text',
-                    'Content': '呵呵,不认识！',
-
+                    'Content': '哈哈，不认识',
                 }
-                # 拼接根节点
+                print '不认识的类型'
+
+            if response:
+                # 将字典转换成xml格式
                 response = xmltodict.unparse({'xml': response})
-                print request_dict['Content']
+                # 返回xml数据
                 return response
+            else:
+                return ''
+
     return ''
 
 
